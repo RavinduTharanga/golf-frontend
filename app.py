@@ -472,7 +472,7 @@ st.divider()
 #         )
 
 # st.divider()
-st.markdown("### Your top 5 model picks")
+st.markdown("### Top 5 model picks")
 
 for _, row in preds.sort_values("rank").iterrows():
     edge_val = row.get("edge", None)
