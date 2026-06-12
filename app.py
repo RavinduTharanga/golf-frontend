@@ -123,11 +123,11 @@ def normalize_name(n):
 # st.title("Golf edge dashboard")
 
 if is_tournament_live():
-    st.caption(f"Live.....| {datetime.now().strftime('%H:%M:%S')} ET")
+    st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
 else:
     st.caption(f"Game Stopped | {datetime.now().strftime('%H:%M:%S')} ET")
 
-st.divider()
+
 
 # load data
 with st.spinner("Loading..."):
