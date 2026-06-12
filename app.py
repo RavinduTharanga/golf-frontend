@@ -211,7 +211,7 @@ for _, row in preds.sort_values("rank").iterrows():
         signal = f"🟢 +{edge_val:.1f}%"
     elif has_edge and edge_val < 50:
         signal = f"🟡 +{edge_val:.1f}%"
-    elif has_edge and edge_val<30
+    elif has_edge and edge_val<30:
         signal = f"🔴 {edge_val:.1f}%"
     else:
         signal = "⚪ —"
