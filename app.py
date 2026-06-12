@@ -321,8 +321,8 @@ def normalize_name(n):
 
 # ── UI ───────────────────────────────────────────────────────────────────────
 
-st.title("Golf edge dashboard")
-st.caption(f"Refreshes every 5 minutes — last load: {datetime.now().strftime('%H:%M:%S')}")
+# st.title("Golf edge dashboard")
+# st.caption(f"Refreshes every 5 minutes — last load: {datetime.now().strftime('%H:%M:%S')}")
 
 col_refresh = st.columns([6, 1])[1]
 if col_refresh.button("Refresh now"):
@@ -404,6 +404,74 @@ st.divider()
 
 # ── player cards ─────────────────────────────────────────────────────────────
 
+# st.markdown("### Your top 5 model picks")
+
+# for _, row in preds.sort_values("rank").iterrows():
+#     edge_val = row.get("edge", None)
+#     has_edge = pd.notna(edge_val)
+
+#     if has_edge and edge_val > 5:
+#         border = "2px solid #1D9E75"
+#         badge_bg = "#E1F5EE"
+#         badge_color = "#0F6E56"
+#         signal = f"BET +{edge_val:.1f}%"
+#     elif has_edge and edge_val > 0:
+#         border = "0.5px solid #5DCAA5"
+#         badge_bg = "#E1F5EE"
+#         badge_color = "#0F6E56"
+#         signal = f"Lean +{edge_val:.1f}%"
+#     elif has_edge:
+#         border = "0.5px solid var(--color-border-tertiary)"
+#         badge_bg = "#FCEBEB"
+#         badge_color = "#A32D2D"
+#         signal = f"Skip {edge_val:.1f}%"
+#     else:
+#         border = "0.5px solid var(--color-border-tertiary)"
+#         badge_bg = "#F1EFE8"
+#         badge_color = "#5F5E5A"
+#         signal = "No odds"
+
+#     with st.container():
+#         c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 2])
+
+#         c1.markdown(f"**{int(row['rank'])}. {row['player_name']}**")
+
+#         c2.markdown(
+#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Your model</span><br>"
+#             f"<span style='font-size:18px; font-weight:500'>{row['your_model_pct']}%</span>",
+#             unsafe_allow_html=True
+#         )
+
+#         book_display = f"{row['book_pct']}%" if pd.notna(row.get('book_pct')) else "—"
+#         c3.markdown(
+#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Book implied</span><br>"
+#             f"<span style='font-size:18px; font-weight:500'>{book_display}</span>",
+#             unsafe_allow_html=True
+#         )
+
+#         sg_display = f"{row['sg_total']:.2f}" if pd.notna(row.get('sg_total')) else "—"
+#         pos_display = row.get('position', '—') or '—'
+#         thru_display = f"thru {int(row['thru'])}" if pd.notna(row.get('thru')) and row.get('thru', 0) > 0 else "not started"
+#         c4.markdown(
+#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Live pos / SG</span><br>"
+#             f"<span style='font-size:18px; font-weight:500'>{pos_display}</span> "
+#             f"<span style='font-size:12px; color:var(--color-text-secondary)'>{thru_display} · SG {sg_display}</span>",
+#             unsafe_allow_html=True
+#         )
+
+#         c5.markdown(
+#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Signal</span><br>"
+#             f"<span style='background:{badge_bg}; color:{badge_color}; "
+#             f"padding:3px 10px; border-radius:6px; font-size:13px; font-weight:500'>{signal}</span>",
+#             unsafe_allow_html=True
+#         )
+
+#         st.markdown(
+#             f"<div style='border-top:{border}; margin:8px 0 16px 0'></div>",
+#             unsafe_allow_html=True
+#         )
+
+# st.divider()
 st.markdown("### Your top 5 model picks")
 
 for _, row in preds.sort_values("rank").iterrows():
@@ -411,68 +479,51 @@ for _, row in preds.sort_values("rank").iterrows():
     has_edge = pd.notna(edge_val)
 
     if has_edge and edge_val > 5:
-        border = "2px solid #1D9E75"
-        badge_bg = "#E1F5EE"
-        badge_color = "#0F6E56"
-        signal = f"BET +{edge_val:.1f}%"
+        signal = f"🟢 BET +{edge_val:.1f}%"
     elif has_edge and edge_val > 0:
-        border = "0.5px solid #5DCAA5"
-        badge_bg = "#E1F5EE"
-        badge_color = "#0F6E56"
-        signal = f"Lean +{edge_val:.1f}%"
+        signal = f"🟡 Lean +{edge_val:.1f}%"
     elif has_edge:
-        border = "0.5px solid var(--color-border-tertiary)"
-        badge_bg = "#FCEBEB"
-        badge_color = "#A32D2D"
-        signal = f"Skip {edge_val:.1f}%"
+        signal = f"🔴 Skip {edge_val:.1f}%"
     else:
-        border = "0.5px solid var(--color-border-tertiary)"
-        badge_bg = "#F1EFE8"
-        badge_color = "#5F5E5A"
-        signal = "No odds"
+        signal = "⚪ No odds"
 
-    with st.container():
-        c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 2])
+    book_display = f"{row['book_pct']:.1f}%" if pd.notna(row.get('book_pct')) else "—"
+    sg_display = f"{row['sg_total']:.2f}" if pd.notna(row.get('sg_total')) else "—"
+    pos_display = str(row.get('position', '—') or '—')
+    thru_display = f"{int(row['thru'])}" if pd.notna(row.get('thru')) and row.get('thru', 0) > 0 else "—"
 
-        c1.markdown(f"**{int(row['rank'])}. {row['player_name']}**")
-
-        c2.markdown(
-            f"<span style='font-size:13px; color:var(--color-text-secondary)'>Your model</span><br>"
-            f"<span style='font-size:18px; font-weight:500'>{row['your_model_pct']}%</span>",
-            unsafe_allow_html=True
-        )
-
-        book_display = f"{row['book_pct']}%" if pd.notna(row.get('book_pct')) else "—"
-        c3.markdown(
-            f"<span style='font-size:13px; color:var(--color-text-secondary)'>Book implied</span><br>"
-            f"<span style='font-size:18px; font-weight:500'>{book_display}</span>",
-            unsafe_allow_html=True
-        )
-
-        sg_display = f"{row['sg_total']:.2f}" if pd.notna(row.get('sg_total')) else "—"
-        pos_display = row.get('position', '—') or '—'
-        thru_display = f"thru {int(row['thru'])}" if pd.notna(row.get('thru')) and row.get('thru', 0) > 0 else "not started"
-        c4.markdown(
-            f"<span style='font-size:13px; color:var(--color-text-secondary)'>Live pos / SG</span><br>"
-            f"<span style='font-size:18px; font-weight:500'>{pos_display}</span> "
-            f"<span style='font-size:12px; color:var(--color-text-secondary)'>{thru_display} · SG {sg_display}</span>",
-            unsafe_allow_html=True
-        )
-
-        c5.markdown(
-            f"<span style='font-size:13px; color:var(--color-text-secondary)'>Signal</span><br>"
-            f"<span style='background:{badge_bg}; color:{badge_color}; "
-            f"padding:3px 10px; border-radius:6px; font-size:13px; font-weight:500'>{signal}</span>",
-            unsafe_allow_html=True
-        )
-
-        st.markdown(
-            f"<div style='border-top:{border}; margin:8px 0 16px 0'></div>",
-            unsafe_allow_html=True
-        )
-
-st.divider()
-
+    st.markdown(f"""
+    <div style="background:var(--color-background-secondary);
+                border-radius:12px;
+                padding:14px 16px;
+                margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span style="font-weight:500; font-size:15px;">
+                {int(row['rank'])}. {row['player_name']}
+            </span>
+            <span style="font-size:13px;">{signal}</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr;
+                    gap:8px; text-align:center;">
+            <div>
+                <div style="font-size:11px; color:var(--color-text-secondary);">Your model</div>
+                <div style="font-size:15px; font-weight:500;">{row['your_model_pct']}%</div>
+            </div>
+            <div>
+                <div style="font-size:11px; color:var(--color-text-secondary);">Book</div>
+                <div style="font-size:15px; font-weight:500;">{book_display}</div>
+            </div>
+            <div>
+                <div style="font-size:11px; color:var(--color-text-secondary);">Position</div>
+                <div style="font-size:15px; font-weight:500;">{pos_display}</div>
+            </div>
+            <div>
+                <div style="font-size:11px; color:var(--color-text-secondary);">SG / Thru</div>
+                <div style="font-size:15px; font-weight:500;">{sg_display} / {thru_display}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 # ── full live leaderboard ─────────────────────────────────────────────────────
 
 if live_ok and not live_df.empty:
