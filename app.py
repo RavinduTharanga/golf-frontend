@@ -258,26 +258,30 @@ def get_book_odds():
     r.raise_for_status()
     data = r.json()
 
-    # log raw structure so we can see what comes back
-    st.write("Raw odds API response keys:", list(data.keys()) if isinstance(data, dict) else type(data))
-    st.write("Sample:", str(data)[:500])
-
+    books = data.get("books_offering", [])
     rows = []
     for p in data.get("odds", []):
         name = p.get("player_name", "")
-        # collect all book implied probs
+
+        # collect implied probs from all books
         book_probs = []
-        for k, v in p.items():
-            if k not in ("player_name", "dg_id", "datagolf_base_history") and isinstance(v, dict):
-                imp = v.get("implied_prob", None)
-                if imp is not None:
-                    book_probs.append(float(imp))
+        for book in books:
+            val = p.get(book)
+            if val is not None:
+                try:
+                    book_probs.append(float(val))
+                except (ValueError, TypeError):
+                    pass
+
         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
+
         rows.append({
             "player_name": name,
             "avg_book_prob": avg_book,
         })
     return pd.DataFrame(rows)
+
+
     
 @st.cache_data(ttl=300)
 def get_live_stats():
