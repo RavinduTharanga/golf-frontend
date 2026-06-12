@@ -472,58 +472,38 @@ st.divider()
 #         )
 
 # st.divider()
-st.markdown("### Top 5 model picks")
+st.markdown("### Your top 5 model picks")
 
+table_rows = []
 for _, row in preds.sort_values("rank").iterrows():
     edge_val = row.get("edge", None)
     has_edge = pd.notna(edge_val)
 
     if has_edge and edge_val > 5:
-        signal = f"🟢 BET +{edge_val:.1f}%"
+        signal = f"🟢 +{edge_val:.1f}%"
     elif has_edge and edge_val > 0:
-        signal = f"🟡 Lean +{edge_val:.1f}%"
+        signal = f"🟡 +{edge_val:.1f}%"
     elif has_edge:
-        signal = f"🔴 Skip {edge_val:.1f}%"
+        signal = f"🔴 {edge_val:.1f}%"
     else:
-        signal = "⚪ No odds"
+        signal = "⚪ —"
 
-    book_display = f"{row['book_pct']:.1f}%" if pd.notna(row.get('book_pct')) else "—"
-    sg_display = f"{row['sg_total']:.2f}" if pd.notna(row.get('sg_total')) else "—"
-    pos_display = str(row.get('position', '—') or '—')
-    thru_display = f"{int(row['thru'])}" if pd.notna(row.get('thru')) and row.get('thru', 0) > 0 else "—"
+    table_rows.append({
+        "Rank": int(row["rank"]),
+        "Player": row["player_name"],
+        "Model %": f"{row['your_model_pct']}%",
+        "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
+        "Edge": signal,
+        "Pos": str(row.get("position", "—") or "—"),
+        "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
+        "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
+    })
 
-    st.markdown(f"""
-    <div style="background:var(--color-background-secondary);
-                border-radius:12px;
-                padding:14px 16px;
-                margin-bottom:10px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <span style="font-weight:500; font-size:15px;">
-                {int(row['rank'])}. {row['player_name']}
-            </span>
-            <span style="font-size:13px;">{signal}</span>
-        </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr;
-                    gap:8px; text-align:center;">
-            <div>
-                <div style="font-size:11px; color:var(--color-text-secondary);">Your model</div>
-                <div style="font-size:15px; font-weight:500;">{row['your_model_pct']}%</div>
-            </div>
-            <div>
-                <div style="font-size:11px; color:var(--color-text-secondary);">Book</div>
-                <div style="font-size:15px; font-weight:500;">{book_display}</div>
-            </div>
-            <div>
-                <div style="font-size:11px; color:var(--color-text-secondary);">Position</div>
-                <div style="font-size:15px; font-weight:500;">{pos_display}</div>
-            </div>
-            <div>
-                <div style="font-size:11px; color:var(--color-text-secondary);">SG / Thru</div>
-                <div style="font-size:15px; font-weight:500;">{sg_display} / {thru_display}</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+st.dataframe(
+    pd.DataFrame(table_rows),
+    hide_index=True,
+    use_container_width=True
+)
 # ── full live leaderboard ─────────────────────────────────────────────────────
 
 if live_ok and not live_df.empty:
