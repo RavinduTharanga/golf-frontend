@@ -212,6 +212,38 @@ def get_latest_predictions():
     return df[df["category"] == "Top5"].copy()
 
 
+# @st.cache_data(ttl=300)
+# def get_book_odds():
+#     url = "https://feeds.datagolf.com/betting-tools/outrights"
+#     params = {
+#         "tour": "pga",
+#         "market": "top_5",
+#         "odds_format": "percent",
+#         "file_format": "json",
+#         "key": DATAGOLF_KEY,
+#     }
+#     r = requests.get(url, params=params, timeout=30)
+#     r.raise_for_status()
+#     data = r.json()
+#     rows = []
+#     for p in data.get("odds", []):
+#         name = p.get("player_name", "")
+#         dg_prob = p.get("datagolf_base_history", {}).get("baseline", None)
+#         # average implied prob across all books that have odds
+#         book_probs = []
+#         for k, v in p.items():
+#             if k not in ("player_name", "dg_id", "datagolf_base_history") and isinstance(v, dict):
+#                 imp = v.get("implied_prob", None)
+#                 if imp is not None:
+#                     book_probs.append(imp)
+#         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
+#         rows.append({
+#             "player_name": name,
+#             "dg_model_prob": dg_prob,
+#             "avg_book_prob": avg_book,
+#         })
+#     return pd.DataFrame(rows)
+
 @st.cache_data(ttl=300)
 def get_book_odds():
     url = "https://feeds.datagolf.com/betting-tools/outrights"
@@ -225,26 +257,28 @@ def get_book_odds():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
+
+    # log raw structure so we can see what comes back
+    st.write("Raw odds API response keys:", list(data.keys()) if isinstance(data, dict) else type(data))
+    st.write("Sample:", str(data)[:500])
+
     rows = []
     for p in data.get("odds", []):
         name = p.get("player_name", "")
-        dg_prob = p.get("datagolf_base_history", {}).get("baseline", None)
-        # average implied prob across all books that have odds
+        # collect all book implied probs
         book_probs = []
         for k, v in p.items():
             if k not in ("player_name", "dg_id", "datagolf_base_history") and isinstance(v, dict):
                 imp = v.get("implied_prob", None)
                 if imp is not None:
-                    book_probs.append(imp)
+                    book_probs.append(float(imp))
         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
         rows.append({
             "player_name": name,
-            "dg_model_prob": dg_prob,
             "avg_book_prob": avg_book,
         })
     return pd.DataFrame(rows)
-
-
+    
 @st.cache_data(ttl=300)
 def get_live_stats():
     url = "https://feeds.datagolf.com/preds/live-tournament-stats"
