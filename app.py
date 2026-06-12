@@ -121,6 +121,7 @@ def normalize_name(n):
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 # st.title("Golf edge dashboard")
+st.title("⛳ Fairway Edge  Predictions")
 
 if is_tournament_live():
     st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
