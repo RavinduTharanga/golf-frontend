@@ -200,7 +200,7 @@ preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
 
 # ── top 5 table ───────────────────────────────────────────────────────────────
 
-st.markdown("### Your top 5 model picks")
+st.markdown("### Top 5 model picks")
 
 table_rows = []
 for _, row in preds.sort_values("rank").iterrows():
