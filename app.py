@@ -22,10 +22,16 @@ s3_client = boto3.client(
 
 # ── tournament live check ─────────────────────────────────────────────────────
 
+# def is_tournament_live():
+#     et = pytz.timezone("America/New_York")
+#     now = datetime.now(et)
+#     is_tournament_day = now.weekday() in [3, 4, 5, 6]  # Thu-Sun
+#     is_playing_hours = dtime(8, 0) <= now.time() <= dtime(20, 0)
+#     return is_tournament_day and is_playing_hours
 def is_tournament_live():
     et = pytz.timezone("America/New_York")
-    now = datetime.now(et)
-    is_tournament_day = now.weekday() in [3, 4, 5, 6]  # Thu-Sun
+    now = datetime.now(pytz.utc).astimezone(et)  # convert from UTC to ET
+    is_tournament_day = now.weekday() in [3, 4, 5, 6]
     is_playing_hours = dtime(8, 0) <= now.time() <= dtime(20, 0)
     return is_tournament_day and is_playing_hours
 
@@ -123,11 +129,17 @@ def normalize_name(n):
 # st.title("Golf edge dashboard")
 st.title("⛳ Fairway Edge  Predictions")
 
-if is_tournament_live():
-    st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
-else:
-    st.caption(f"🔴 Game Stopped | {datetime.now().strftime('%H:%M:%S')} ET")
+# if is_tournament_live():
+#     st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
+# else:
+#     st.caption(f"🔴 Game Stopped | {datetime.now().strftime('%H:%M:%S')} ET")
+et = pytz.timezone("America/New_York")
+now_et = datetime.now(pytz.utc).astimezone(et)
 
+if is_tournament_live():
+    st.caption(f"🟢 Live | {now_et.strftime('%H:%M:%S')} ET")
+else:
+    st.caption(f"🔴 No active round | {now_et.strftime('%H:%M:%S')} ET")
 
 
 # load data
