@@ -319,17 +319,15 @@ def normalize_name(n):
     return str(n).lower()
 
 
-# ── UI ───────────────────────────────────────────────────────────────────────
-
 # st.title("Golf edge dashboard")
 # st.caption(f"Refreshes every 5 minutes — last load: {datetime.now().strftime('%H:%M:%S')}")
 
-col_refresh = st.columns([6, 1])[1]
-if col_refresh.button("Refresh now"):
-    st.cache_data.clear()
-    st.rerun()
+# col_refresh = st.columns([6, 1])[1]
+# if col_refresh.button("Refresh now"):
+#     st.cache_data.clear()
+#     st.rerun()
 
-st.divider()
+# st.divider()
 
 # load data
 with st.spinner("Loading predictions, odds and live stats..."):
