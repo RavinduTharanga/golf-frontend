@@ -120,12 +120,12 @@ def normalize_name(n):
 
 # ── UI ────────────────────────────────────────────────────────────────────────
 
-st.title("Golf edge dashboard")
+# st.title("Golf edge dashboard")
 
 if is_tournament_live():
-    st.caption(f"Live — refreshing every 5 minutes | {datetime.now().strftime('%H:%M:%S')} ET")
+    st.caption(f"Live.....| {datetime.now().strftime('%H:%M:%S')} ET")
 else:
-    st.caption(f"No active round — refreshing every hour | {datetime.now().strftime('%H:%M:%S')} ET")
+    st.caption(f"Game Stopped | {datetime.now().strftime('%H:%M:%S')} ET")
 
 st.divider()
 
@@ -180,22 +180,22 @@ preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
 
 # ── metrics ───────────────────────────────────────────────────────────────────
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Players tracked", len(preds))
-if "edge" in preds.columns and preds["edge"].notna().any():
-    best = preds.loc[preds["edge"].idxmax()]
-    m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
-    m3.metric("Positive edges", int((preds["edge"] > 0).sum()))
-else:
-    m2.metric("Odds", "Unavailable")
-    m3.metric("Live", "Pre-tournament" if not live_ok else "Live")
+# m1, m2, m3, m4 = st.columns(4)
+# m1.metric("Players tracked", len(preds))
+# if "edge" in preds.columns and preds["edge"].notna().any():
+#     best = preds.loc[preds["edge"].idxmax()]
+#     m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
+#     m3.metric("Positive edges", int((preds["edge"] > 0).sum()))
+# else:
+#     m2.metric("Odds", "Unavailable")
+#     m3.metric("Live", "Pre-tournament" if not live_ok else "Live")
 
-if live_ok and "thru" in preds.columns:
-    avg_thru = preds["thru"].dropna()
-    if not avg_thru.empty:
-        m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
+# if live_ok and "thru" in preds.columns:
+#     avg_thru = preds["thru"].dropna()
+#     if not avg_thru.empty:
+#         m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
 
-st.divider()
+# st.divider()
 
 # ── top 5 table ───────────────────────────────────────────────────────────────
 
