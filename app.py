@@ -384,23 +384,23 @@ preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
 
 # ── metric row ───────────────────────────────────────────────────────────────
 
-m1, m2, m3, m4 = st.columns(4)
-m1.metric("Players tracked", len(preds))
-if "edge" in preds.columns and preds["edge"].notna().any():
-    best = preds.loc[preds["edge"].idxmax()]
-    m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
-    positive = (preds["edge"] > 0).sum()
-    m3.metric("Positive edges", int(positive))
-else:
-    m2.metric("Odds status", "Unavailable")
-    m3.metric("Live status", "Pre-tournament" if not live_ok else "Live")
+# m1, m2, m3, m4 = st.columns(4)
+# m1.metric("Players tracked", len(preds))
+# if "edge" in preds.columns and preds["edge"].notna().any():
+#     best = preds.loc[preds["edge"].idxmax()]
+#     m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
+#     positive = (preds["edge"] > 0).sum()
+#     m3.metric("Positive edges", int(positive))
+# else:
+#     m2.metric("Odds status", "Unavailable")
+#     m3.metric("Live status", "Pre-tournament" if not live_ok else "Live")
 
-if live_ok and "thru" in preds.columns:
-    avg_thru = preds["thru"].dropna()
-    if not avg_thru.empty:
-        m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
+# if live_ok and "thru" in preds.columns:
+#     avg_thru = preds["thru"].dropna()
+#     if not avg_thru.empty:
+#         m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
 
-st.divider()
+# st.divider()
 
 # ── player cards ─────────────────────────────────────────────────────────────
 
