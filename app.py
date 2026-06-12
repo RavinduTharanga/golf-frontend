@@ -207,11 +207,11 @@ for _, row in preds.sort_values("rank").iterrows():
     edge_val = row.get("edge", None)
     has_edge = pd.notna(edge_val)
 
-    if has_edge and edge_val > 5:
+    if has_edge and edge_val > 50:
         signal = f"🟢 +{edge_val:.1f}%"
-    elif has_edge and edge_val > 0:
+    elif has_edge and edge_val < 50:
         signal = f"🟡 +{edge_val:.1f}%"
-    elif has_edge:
+    elif has_edge and edge_val<30
         signal = f"🔴 {edge_val:.1f}%"
     else:
         signal = "⚪ —"
