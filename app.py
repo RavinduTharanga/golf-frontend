@@ -246,32 +246,22 @@ for _, row in preds.sort_values("rank").iterrows():
         signal = f"🟢 +{edge_val:.1f}%"
     elif has_edge and edge_val < 50:
         signal = f"🟡 +{edge_val:.1f}%"
-    elif has_edge and edge_val<30:
+    elif has_edge and edge_val < 30:
         signal = f"🔴 {edge_val:.1f}%"
     else:
         signal = "⚪ —"
 
-    # table_rows.append({
-    #     "Rank": int(row["rank"]),
-    #     "Player": row["player_name"],
-    #     "Model %": f"{row['your_model_pct']}%",
-    #     "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
-    #     "Edge": signal,
-    #     "Pos": str(row.get("position", "—") or "—"),
-    #     "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
-    #     "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
-    # })
-table_rows.append({
-    "Rank": int(row["rank"]),
-    "Player": row["player_name"],
-    "Model %": f"{row['your_model_pct']}%",       # original
-    "Live adj %": f"{row['adjusted_pct']}%",       # live adjusted
-    "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
-    "Edge": signal,                                 # based on adjusted
-    "Pos": str(row.get("position", "—") or "—"),
-    "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
-    "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
-})
+    table_rows.append({        # ← must be indented inside the for loop
+        "Rank": int(row["rank"]),
+        "Player": row["player_name"],
+        "Model %": f"{row['your_model_pct']}%",
+        "Live adj %": f"{row['adjusted_pct']}%",
+        "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
+        "Edge": signal,
+        "Pos": str(row.get("position", "—") or "—"),
+        "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
+        "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
+    })
 
 st.dataframe(
     pd.DataFrame(table_rows),
