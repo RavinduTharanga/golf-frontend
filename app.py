@@ -362,8 +362,7 @@ preds["name_key"] = preds["player_name"].apply(normalize_name)
 
 if odds_ok and not odds_df.empty:
     odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
-    preds = preds.merge(odds_df[["name_key", "dg_model_prob", "avg_book_prob"]],
-                        on="name_key", how="left")
+    preds = preds.merge(odds_df[["name_key", "avg_book_prob"]],on="name_key", how="left")
 else:
     preds["dg_model_prob"] = None
     preds["avg_book_prob"] = None
