@@ -1,183 +1,10 @@
-# import streamlit as st
-# import pandas as pd
-# import boto3
-# import os
-
-# S3_BUCKET = os.environ["S3_BUCKET"]
-# s3_client = boto3.client("s3")
-
-# st.title("⛳ Golf Tournament Predictions")
-
-# # List all prediction files in S3
-# response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-# files = [obj["Key"] for obj in response.get("Contents", []) 
-#          if obj["Key"].endswith("_predictions.csv")]
-
-# if not files:
-#     st.warning("No predictions found yet.")
-# else:
-#     # Dropdown to select tournament
-#     selected = st.selectbox("Select Tournament", files)
-    
-#     # Load and display
-#     df = pd.read_csv(f"s3://{S3_BUCKET}/{selected}")
-    
-#     st.subheader(f"🏆 {df['tournament'].iloc[0]} {df['year'].iloc[0]}")
-#     st.dataframe(
-#         df[["rank", "player_name", "p"]].rename(columns={
-#             "rank": "Rank",
-#             "player_name": "Player",
-#             "p": "Probability"
-#         }),
-#         hide_index=True
-#     )
-
-# import streamlit as st
-# import pandas as pd
-# import boto3
-# import os
-
-# S3_BUCKET = os.environ["S3_BUCKET"]
-# AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY_ID"]
-# AWS_SECRET_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-
-# s3_client = boto3.client(
-#     "s3",
-#     aws_access_key_id=AWS_ACCESS_KEY,
-#     aws_secret_access_key=AWS_SECRET_KEY,
-#     region_name="us-east-1"
-# )
-
-# st.title("⛳ Golf Tournament Predictions")
-
-# response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-# files = [obj["Key"] for obj in response.get("Contents", [])
-#          if obj["Key"].endswith("_predictions.csv")]
-
-# if not files:
-#     st.warning("No predictions found yet.")
-# else:
-#     selected = st.selectbox("Select Tournament", files)
-#     df = pd.read_csv(f"s3://{S3_BUCKET}/{selected}",
-#                      storage_options={
-#                          "key": AWS_ACCESS_KEY,
-#                          "secret": AWS_SECRET_KEY
-#                      })
-
-#     st.subheader(f"🏆 {df['tournament'].iloc[0]} {df['year'].iloc[0]}")
-#     st.dataframe(
-#         df[["rank", "player_name", "p"]].rename(columns={
-#             "rank": "Rank",
-#             "player_name": "Player",
-#             "p": "Probability"
-#         }),
-#         hide_index=True
-#     )
-
-# import streamlit as st
-# import pandas as pd
-# import boto3
-# import os
-
-# S3_BUCKET = os.environ["S3_BUCKET"]
-# AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY_ID"]
-# AWS_SECRET_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-
-# s3_client = boto3.client(
-#     "s3",
-#     aws_access_key_id=AWS_ACCESS_KEY,
-#     aws_secret_access_key=AWS_SECRET_KEY,
-#     region_name="us-east-1"
-# )
-
-# st.title("⛳ Golf Tournament Predictions")
-
-# # ADD THIS - refreshes every 5 minutes
-# @st.cache_data(ttl=300)
-# def get_files():
-#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-#     return [obj["Key"] for obj in response.get("Contents", [])
-#             if obj["Key"].endswith("_predictions.csv")]
-
-# files = get_files()
-
-# if not files:
-#     st.warning("No predictions found yet.")
-# else:
-#     selected = st.selectbox("Select Tournament", files)
-#     df = pd.read_csv(f"s3://{S3_BUCKET}/{selected}",
-#                      storage_options={
-#                          "key": AWS_ACCESS_KEY,
-#                          "secret": AWS_SECRET_KEY
-#                      })
-#     st.subheader(f"🏆 {df['tournament'].iloc[0]} {df['year'].iloc[0]}")
-#     st.dataframe(
-#         df[["rank", "player_name", "p"]].rename(columns={
-#             "rank": "Rank",
-#             "player_name": "Player",
-#             "p": "Probability"
-#         }),
-#         hide_index=True
-#     )
-
-# import streamlit as st
-# import pandas as pd
-# import boto3
-# import os
-
-# S3_BUCKET = os.environ["S3_BUCKET"]
-# AWS_ACCESS_KEY = os.environ["AWS_ACCESS_KEY_ID"]
-# AWS_SECRET_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
-
-# s3_client = boto3.client(
-#     "s3",
-#     aws_access_key_id=AWS_ACCESS_KEY,
-#     aws_secret_access_key=AWS_SECRET_KEY,
-#     region_name="us-east-1"
-# )
-
-# st.title("⛳ Golf Tournament Predictions")
-
-# @st.cache_data(ttl=300)
-# def get_files():
-#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-#     return [obj["Key"] for obj in response.get("Contents", [])
-#             if obj["Key"].endswith("_predictions.csv")]
-
-# files = get_files()
-
-# if not files:
-#     st.warning("No predictions found yet.")
-# else:
-#     # Sort files and show latest by default
-#     files_sorted = sorted(files, reverse=True)
-    
-#     selected = st.selectbox(
-#         "Select Tournament", 
-#         files_sorted,
-#         index=0  # always selects latest file by default
-#     )
-    
-#     df = pd.read_csv(f"s3://{S3_BUCKET}/{selected}",
-#                      storage_options={
-#                          "key": AWS_ACCESS_KEY,
-#                          "secret": AWS_SECRET_KEY
-#                      })
-#     st.subheader(f"🏆 {df['tournament'].iloc[0]} {df['year'].iloc[0]}")
-#     st.dataframe(
-#         df[["rank", "player_name", "p"]].rename(columns={
-#             "rank": "Rank",
-#             "player_name": "Player",
-#             "p": "Probability"
-#         }),
-#         hide_index=True
-#     )
 import streamlit as st
 import pandas as pd
 import requests
 import boto3
 import os
-from datetime import datetime
+import pytz
+from datetime import datetime, time as dtime
 
 st.set_page_config(page_title="Golf Edge Dashboard", layout="wide")
 
@@ -193,9 +20,20 @@ s3_client = boto3.client(
     region_name="us-east-1"
 )
 
-# ── helpers ──────────────────────────────────────────────────────────────────
+# ── tournament live check ─────────────────────────────────────────────────────
 
-@st.cache_data(ttl=300)
+def is_tournament_live():
+    et = pytz.timezone("America/New_York")
+    now = datetime.now(et)
+    is_tournament_day = now.weekday() in [3, 4, 5, 6]  # Thu-Sun
+    is_playing_hours = dtime(8, 0) <= now.time() <= dtime(20, 0)
+    return is_tournament_day and is_playing_hours
+
+ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+@st.cache_data(ttl=ttl)
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
     files = sorted(
@@ -212,39 +50,7 @@ def get_latest_predictions():
     return df[df["category"] == "Top5"].copy()
 
 
-# @st.cache_data(ttl=300)
-# def get_book_odds():
-#     url = "https://feeds.datagolf.com/betting-tools/outrights"
-#     params = {
-#         "tour": "pga",
-#         "market": "top_5",
-#         "odds_format": "percent",
-#         "file_format": "json",
-#         "key": DATAGOLF_KEY,
-#     }
-#     r = requests.get(url, params=params, timeout=30)
-#     r.raise_for_status()
-#     data = r.json()
-#     rows = []
-#     for p in data.get("odds", []):
-#         name = p.get("player_name", "")
-#         dg_prob = p.get("datagolf_base_history", {}).get("baseline", None)
-#         # average implied prob across all books that have odds
-#         book_probs = []
-#         for k, v in p.items():
-#             if k not in ("player_name", "dg_id", "datagolf_base_history") and isinstance(v, dict):
-#                 imp = v.get("implied_prob", None)
-#                 if imp is not None:
-#                     book_probs.append(imp)
-#         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
-#         rows.append({
-#             "player_name": name,
-#             "dg_model_prob": dg_prob,
-#             "avg_book_prob": avg_book,
-#         })
-#     return pd.DataFrame(rows)
-
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=ttl)
 def get_book_odds():
     url = "https://feeds.datagolf.com/betting-tools/outrights"
     params = {
@@ -257,13 +63,10 @@ def get_book_odds():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
-
     books = data.get("books_offering", [])
     rows = []
     for p in data.get("odds", []):
         name = p.get("player_name", "")
-
-        # collect implied probs from all books
         book_probs = []
         for book in books:
             val = p.get(book)
@@ -272,9 +75,7 @@ def get_book_odds():
                     book_probs.append(float(val))
                 except (ValueError, TypeError):
                     pass
-
         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
-
         rows.append({
             "player_name": name,
             "avg_book_prob": avg_book,
@@ -282,8 +83,7 @@ def get_book_odds():
     return pd.DataFrame(rows)
 
 
-    
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=ttl)
 def get_live_stats():
     url = "https://feeds.datagolf.com/preds/live-tournament-stats"
     params = {
@@ -312,25 +112,25 @@ def get_live_stats():
 
 
 def normalize_name(n):
-    """Last, First -> first last lowercase for fuzzy matching."""
     if "," in str(n):
         parts = str(n).split(",", 1)
         return (parts[1].strip() + " " + parts[0].strip()).lower()
     return str(n).lower()
 
 
-# st.title("Golf edge dashboard")
-# st.caption(f"Refreshes every 5 minutes — last load: {datetime.now().strftime('%H:%M:%S')}")
+# ── UI ────────────────────────────────────────────────────────────────────────
 
-# col_refresh = st.columns([6, 1])[1]
-# if col_refresh.button("Refresh now"):
-#     st.cache_data.clear()
-#     st.rerun()
+st.title("Golf edge dashboard")
 
-# st.divider()
+if is_tournament_live():
+    st.caption(f"Live — refreshing every 5 minutes | {datetime.now().strftime('%H:%M:%S')} ET")
+else:
+    st.caption(f"No active round — refreshing every hour | {datetime.now().strftime('%H:%M:%S')} ET")
+
+st.divider()
 
 # load data
-with st.spinner("Loading predictions, odds and live stats..."):
+with st.spinner("Loading..."):
     preds = get_latest_predictions()
     try:
         odds_df = get_book_odds()
@@ -353,16 +153,15 @@ tournament = preds["tournament"].iloc[0]
 year = preds["year"].iloc[0]
 st.subheader(f"{tournament} {year}")
 
-# ── build merged table ────────────────────────────────────────────────────────
+# ── merge data ────────────────────────────────────────────────────────────────
 
 preds = preds.copy()
 preds["name_key"] = preds["player_name"].apply(normalize_name)
 
 if odds_ok and not odds_df.empty:
     odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
-    preds = preds.merge(odds_df[["name_key", "avg_book_prob"]],on="name_key", how="left")
+    preds = preds.merge(odds_df[["name_key", "avg_book_prob"]], on="name_key", how="left")
 else:
-    preds["dg_model_prob"] = None
     preds["avg_book_prob"] = None
 
 if live_ok and not live_df.empty:
@@ -375,102 +174,32 @@ else:
     for col in ["position", "total", "thru", "sg_total"]:
         preds[col] = None
 
-# edge score: your model p vs avg book implied prob
 preds["your_model_pct"] = (preds["p"] * 100).round(1)
 preds["book_pct"] = (preds["avg_book_prob"] * 100).round(1) if "avg_book_prob" in preds else None
 preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
 
-# ── metric row ───────────────────────────────────────────────────────────────
+# ── metrics ───────────────────────────────────────────────────────────────────
 
-# m1, m2, m3, m4 = st.columns(4)
-# m1.metric("Players tracked", len(preds))
-# if "edge" in preds.columns and preds["edge"].notna().any():
-#     best = preds.loc[preds["edge"].idxmax()]
-#     m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
-#     positive = (preds["edge"] > 0).sum()
-#     m3.metric("Positive edges", int(positive))
-# else:
-#     m2.metric("Odds status", "Unavailable")
-#     m3.metric("Live status", "Pre-tournament" if not live_ok else "Live")
+m1, m2, m3, m4 = st.columns(4)
+m1.metric("Players tracked", len(preds))
+if "edge" in preds.columns and preds["edge"].notna().any():
+    best = preds.loc[preds["edge"].idxmax()]
+    m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
+    m3.metric("Positive edges", int((preds["edge"] > 0).sum()))
+else:
+    m2.metric("Odds", "Unavailable")
+    m3.metric("Live", "Pre-tournament" if not live_ok else "Live")
 
-# if live_ok and "thru" in preds.columns:
-#     avg_thru = preds["thru"].dropna()
-#     if not avg_thru.empty:
-#         m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
+if live_ok and "thru" in preds.columns:
+    avg_thru = preds["thru"].dropna()
+    if not avg_thru.empty:
+        m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
 
-# st.divider()
+st.divider()
 
-# ── player cards ─────────────────────────────────────────────────────────────
+# ── top 5 table ───────────────────────────────────────────────────────────────
 
-# st.markdown("### Your top 5 model picks")
-
-# for _, row in preds.sort_values("rank").iterrows():
-#     edge_val = row.get("edge", None)
-#     has_edge = pd.notna(edge_val)
-
-#     if has_edge and edge_val > 5:
-#         border = "2px solid #1D9E75"
-#         badge_bg = "#E1F5EE"
-#         badge_color = "#0F6E56"
-#         signal = f"BET +{edge_val:.1f}%"
-#     elif has_edge and edge_val > 0:
-#         border = "0.5px solid #5DCAA5"
-#         badge_bg = "#E1F5EE"
-#         badge_color = "#0F6E56"
-#         signal = f"Lean +{edge_val:.1f}%"
-#     elif has_edge:
-#         border = "0.5px solid var(--color-border-tertiary)"
-#         badge_bg = "#FCEBEB"
-#         badge_color = "#A32D2D"
-#         signal = f"Skip {edge_val:.1f}%"
-#     else:
-#         border = "0.5px solid var(--color-border-tertiary)"
-#         badge_bg = "#F1EFE8"
-#         badge_color = "#5F5E5A"
-#         signal = "No odds"
-
-#     with st.container():
-#         c1, c2, c3, c4, c5 = st.columns([3, 2, 2, 2, 2])
-
-#         c1.markdown(f"**{int(row['rank'])}. {row['player_name']}**")
-
-#         c2.markdown(
-#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Your model</span><br>"
-#             f"<span style='font-size:18px; font-weight:500'>{row['your_model_pct']}%</span>",
-#             unsafe_allow_html=True
-#         )
-
-#         book_display = f"{row['book_pct']}%" if pd.notna(row.get('book_pct')) else "—"
-#         c3.markdown(
-#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Book implied</span><br>"
-#             f"<span style='font-size:18px; font-weight:500'>{book_display}</span>",
-#             unsafe_allow_html=True
-#         )
-
-#         sg_display = f"{row['sg_total']:.2f}" if pd.notna(row.get('sg_total')) else "—"
-#         pos_display = row.get('position', '—') or '—'
-#         thru_display = f"thru {int(row['thru'])}" if pd.notna(row.get('thru')) and row.get('thru', 0) > 0 else "not started"
-#         c4.markdown(
-#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Live pos / SG</span><br>"
-#             f"<span style='font-size:18px; font-weight:500'>{pos_display}</span> "
-#             f"<span style='font-size:12px; color:var(--color-text-secondary)'>{thru_display} · SG {sg_display}</span>",
-#             unsafe_allow_html=True
-#         )
-
-#         c5.markdown(
-#             f"<span style='font-size:13px; color:var(--color-text-secondary)'>Signal</span><br>"
-#             f"<span style='background:{badge_bg}; color:{badge_color}; "
-#             f"padding:3px 10px; border-radius:6px; font-size:13px; font-weight:500'>{signal}</span>",
-#             unsafe_allow_html=True
-#         )
-
-#         st.markdown(
-#             f"<div style='border-top:{border}; margin:8px 0 16px 0'></div>",
-#             unsafe_allow_html=True
-#         )
-
-# st.divider()
-st.markdown("### Top 5 model picks")
+st.markdown("### Your top 5 model picks")
 
 table_rows = []
 for _, row in preds.sort_values("rank").iterrows():
@@ -502,7 +231,10 @@ st.dataframe(
     hide_index=True,
     use_container_width=True
 )
-# ── full live leaderboard ─────────────────────────────────────────────────────
+
+st.divider()
+
+# ── live leaderboard ──────────────────────────────────────────────────────────
 
 if live_ok and not live_df.empty:
     st.markdown("### Live leaderboard")
