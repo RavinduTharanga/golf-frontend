@@ -154,6 +154,27 @@ tournament = preds["tournament"].iloc[0]
 year = preds["year"].iloc[0]
 st.subheader(f"{tournament} {year}")
 
+
+# train model
+
+def adjust_probability(base_p: float, sg_total, thru) -> float:
+    """Adjust base model probability using live SG performance."""
+    if pd.isna(sg_total) or pd.isna(thru) or thru == 0:
+        return base_p  # no live data yet — return original
+
+    # Scale SG by holes played — more holes = more reliable signal
+    holes_weight = min(thru / 18, 1.0)  # 0 to 1 as round progresses
+
+    # Adjustment factor — controls how much live data moves the needle
+    # 0.03 means SG of +5 boosts probability by 15%
+    ADJUSTMENT_FACTOR = 0.03
+
+    adjustment = sg_total * ADJUSTMENT_FACTOR * holes_weight
+    adjusted = base_p * (1 + adjustment)
+
+    # Cap between 0 and 1
+    return round(min(max(adjusted, 0.0), 1.0), 4)
+
 # ── merge data ────────────────────────────────────────────────────────────────
 
 preds = preds.copy()
@@ -175,9 +196,23 @@ else:
     for col in ["position", "total", "thru", "sg_total"]:
         preds[col] = None
 
-preds["your_model_pct"] = (preds["p"] * 100).round(1)
+
+# Apply live adjustment
+preds["adjusted_p"] = preds.apply(
+    lambda row: adjust_probability(
+        row["p"],
+        row.get("sg_total"),
+        row.get("thru")
+    ), axis=1
+)
+
+preds["your_model_pct"] = (preds["p"] * 100).round(1)          # original
+preds["adjusted_pct"] = (preds["adjusted_p"] * 100).round(1)   # live adjusted
 preds["book_pct"] = (preds["avg_book_prob"] * 100).round(1) if "avg_book_prob" in preds else None
-preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
+preds["edge"] = (preds["adjusted_pct"] - preds["book_pct"]).round(1)  # edge uses adjusted
+# preds["your_model_pct"] = (preds["p"] * 100).round(1)
+# preds["book_pct"] = (preds["avg_book_prob"] * 100).round(1) if "avg_book_prob" in preds else None
+# preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
 
 # ── metrics ───────────────────────────────────────────────────────────────────
 
@@ -216,16 +251,27 @@ for _, row in preds.sort_values("rank").iterrows():
     else:
         signal = "⚪ —"
 
-    table_rows.append({
-        "Rank": int(row["rank"]),
-        "Player": row["player_name"],
-        "Model %": f"{row['your_model_pct']}%",
-        "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
-        "Edge": signal,
-        "Pos": str(row.get("position", "—") or "—"),
-        "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
-        "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
-    })
+    # table_rows.append({
+    #     "Rank": int(row["rank"]),
+    #     "Player": row["player_name"],
+    #     "Model %": f"{row['your_model_pct']}%",
+    #     "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
+    #     "Edge": signal,
+    #     "Pos": str(row.get("position", "—") or "—"),
+    #     "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
+    #     "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
+    # })
+table_rows.append({
+    "Rank": int(row["rank"]),
+    "Player": row["player_name"],
+    "Model %": f"{row['your_model_pct']}%",       # original
+    "Live adj %": f"{row['adjusted_pct']}%",       # live adjusted
+    "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
+    "Edge": signal,                                 # based on adjusted
+    "Pos": str(row.get("position", "—") or "—"),
+    "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
+    "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
+})
 
 st.dataframe(
     pd.DataFrame(table_rows),
@@ -242,3 +288,5 @@ if live_ok and not live_df.empty:
     live_display = live_df[["position", "player_name", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]].copy()
     live_display.columns = ["Pos", "Player", "Score", "Thru", "SG Total", "SG App", "SG OTT", "SG Putt"]
     st.dataframe(live_display, hide_index=True, use_container_width=True)
+
+
