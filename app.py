@@ -53,7 +53,7 @@ def get_latest_predictions():
         f"s3://{S3_BUCKET}/{files[0]}",
         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
-    return df[df["category"] == "Top5"].copy()
+    return df[df["category"] == "Top10"].copy()
 
 
 @st.cache_data(ttl=ttl)
@@ -61,7 +61,7 @@ def get_book_odds():
     url = "https://feeds.datagolf.com/betting-tools/outrights"
     params = {
         "tour": "pga",
-        "market": "top_5",
+        "market": "top_10",
         "odds_format": "percent",
         "file_format": "json",
         "key": DATAGOLF_KEY,
@@ -247,7 +247,7 @@ preds["edge"] = (preds["adjusted_pct"] - preds["book_pct"]).round(1)  # edge use
 
 # ── top 5 table ───────────────────────────────────────────────────────────────
 
-st.markdown("### Top 5 model picks")
+st.markdown("### Top 10 model picks")
 
 table_rows = []
 for _, row in preds.sort_values("rank").iterrows():
