@@ -39,7 +39,8 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=ttl)
+# @st.cache_data(ttl=ttl)
+@st.cache_data(ttl=0)          # never cache — always re-fetch
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
     files = sorted(
