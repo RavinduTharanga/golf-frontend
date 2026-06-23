@@ -39,43 +39,35 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=ttl)
+# @st.cache_data(ttl=3600)
+# def get_latest_predictions():
+#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
+#     files = sorted(
+#         [obj["Key"] for obj in response.get("Contents", [])
+#          if obj["Key"].endswith("_predictions.csv")],
+#         reverse=True
+#     )
+#     if not files:
+#         return None
+#     df = pd.read_csv(
+#         f"s3://{S3_BUCKET}/{files[0]}",
+#         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
+#     )
+#     return df[df["category"] == "Top10"].copy()
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-    # files = sorted(
-    #     [obj["Key"] for obj in response.get("Contents", [])
-    #      if obj["Key"].endswith("_predictions.csv")],
-    #     reverse=True
-    # )
-    # if not files:
-    #     return None
-    # df = pd.read_csv(
-    #     f"s3://{S3_BUCKET}/{files[0]}",
-    #     storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
-    # )
-
-    prediction_files = [
-    obj for obj in response.get("Contents", [])
-    if obj["Key"].endswith("_predictions.csv")
-    ]
-    
-    latest_file = max(
-        prediction_files,
-        key=lambda x: x["LastModified"]
+    files = sorted(
+        [obj["Key"] for obj in response.get("Contents", [])
+         if obj["Key"].endswith("_predictions.csv")],
+        reverse=True
     )
-    
-    st.write("Loading:", latest_file["Key"])
-    
+    if not files:
+        return None
     df = pd.read_csv(
-        f"s3://{S3_BUCKET}/{latest_file['Key']}",
-        storage_options={
-            "key": AWS_ACCESS_KEY,
-            "secret": AWS_SECRET_KEY
-        }
+        f"s3://{S3_BUCKET}/{files[0]}",
+        storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
     return df[df["category"] == "Top10"].copy()
-
-
 
 
 ############################################################
@@ -151,7 +143,7 @@ def normalize_name(n):
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 # st.title("Golf edge dashboard")
-st.title("⛳ Fairway Edge  s")
+st.title("⛳ Fairway Edge  Predictions")
 
 # if is_tournament_live():
 #     st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
@@ -168,7 +160,6 @@ else:
 
 # load data
 with st.spinner("Loading..."):
-    # preds = get_latest_s()
     preds = get_latest_predictions()
     try:
         odds_df = get_book_odds()
@@ -184,7 +175,7 @@ with st.spinner("Loading..."):
         st.warning(f"Could not load live stats: {e}")
 
 if preds is None:
-    st.error("No s found in S3.")
+    st.error("No predictions found in S3.")
     st.stop()
 
 tournament = preds["tournament"].iloc[0]
@@ -315,5 +306,4 @@ if live_ok and not live_df.empty:
     live_display = live_df[["position", "player_name", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]].copy()
     live_display.columns = ["Pos", "Player", "Score", "Thru", "SG Total", "SG App", "SG OTT", "SG Putt"]
     st.dataframe(live_display, hide_index=True, use_container_width=True)
-
 
