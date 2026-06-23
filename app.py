@@ -40,22 +40,51 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 # @st.cache_data(ttl=ttl)
-@st.cache_data(ttl=0)          # never cache — always re-fetch
-def get_latest_predictions():
+# @st.cache_data(ttl=0)          # never cache — always re-fetch
+# def get_latest_predictions():
+#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
+#     files = sorted(
+#         [obj["Key"] for obj in response.get("Contents", [])
+#          if obj["Key"].endswith("_predictions.csv")],
+#         reverse=True
+#     )
+#     if not files:
+#         return None
+#     df = pd.read_csv(
+#         f"s3://{S3_BUCKET}/{files[0]}",
+#         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
+#     )
+#     return df[df["category"] == "Top10"].copy()
+@st.cache_data(ttl=3600)
+def get_prediction_file_key():
+    """Returns (key, last_modified) so cache busts when file changes."""
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
     files = sorted(
-        [obj["Key"] for obj in response.get("Contents", [])
+        [obj for obj in response.get("Contents", [])
          if obj["Key"].endswith("_predictions.csv")],
+        key=lambda x: x["LastModified"],
         reverse=True
     )
     if not files:
+        return None, None
+    return files[0]["Key"], str(files[0]["LastModified"])
+
+@st.cache_data(ttl=3600)
+def get_latest_predictions(file_key, last_modified):  # last_modified busts the cache
+    if not file_key:
         return None
     df = pd.read_csv(
-        f"s3://{S3_BUCKET}/{files[0]}",
+        f"s3://{S3_BUCKET}/{file_key}",
         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
     return df[df["category"] == "Top10"].copy()
 
+# In your UI:
+file_key, last_modified = get_prediction_file_key()
+preds = get_latest_predictions(file_key, last_modified)
+
+
+############################################################
 
 @st.cache_data(ttl=ttl)
 def get_book_odds():
