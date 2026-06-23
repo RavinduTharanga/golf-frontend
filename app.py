@@ -42,16 +42,36 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 @st.cache_data(ttl=ttl)
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-    files = sorted(
-        [obj["Key"] for obj in response.get("Contents", [])
-         if obj["Key"].endswith("_predictions.csv")],
-        reverse=True
+    # files = sorted(
+    #     [obj["Key"] for obj in response.get("Contents", [])
+    #      if obj["Key"].endswith("_predictions.csv")],
+    #     reverse=True
+    # )
+    # if not files:
+    #     return None
+    # df = pd.read_csv(
+    #     f"s3://{S3_BUCKET}/{files[0]}",
+    #     storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
+    # )
+
+    prediction_files = [
+    obj for obj in response.get("Contents", [])
+    if obj["Key"].endswith("_predictions.csv")
+    ]
+    
+    latest_file = max(
+        prediction_files,
+        key=lambda x: x["LastModified"]
     )
-    if not files:
-        return None
+    
+    st.write("Loading:", latest_file["Key"])
+    
     df = pd.read_csv(
-        f"s3://{S3_BUCKET}/{files[0]}",
-        storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
+        f"s3://{S3_BUCKET}/{latest_file['Key']}",
+        storage_options={
+            "key": AWS_ACCESS_KEY,
+            "secret": AWS_SECRET_KEY
+        }
     )
     return df[df["category"] == "Top10"].copy()
 
@@ -131,7 +151,7 @@ def normalize_name(n):
 # ── UI ────────────────────────────────────────────────────────────────────────
 
 # st.title("Golf edge dashboard")
-st.title("⛳ Fairway Edge  Predictions")
+st.title("⛳ Fairway Edge  s")
 
 # if is_tournament_live():
 #     st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
@@ -148,7 +168,7 @@ else:
 
 # load data
 with st.spinner("Loading..."):
-    preds = get_latest_predictions()
+    preds = get_latest_s()
     try:
         odds_df = get_book_odds()
         odds_ok = True
@@ -163,7 +183,7 @@ with st.spinner("Loading..."):
         st.warning(f"Could not load live stats: {e}")
 
 if preds is None:
-    st.error("No predictions found in S3.")
+    st.error("No s found in S3.")
     st.stop()
 
 tournament = preds["tournament"].iloc[0]
