@@ -168,7 +168,8 @@ else:
 
 # load data
 with st.spinner("Loading..."):
-    preds = get_latest_s()
+    # preds = get_latest_s()
+    preds = get_latest_predictions()
     try:
         odds_df = get_book_odds()
         odds_ok = True
