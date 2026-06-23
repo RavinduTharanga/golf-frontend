@@ -39,7 +39,21 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-@st.cache_data(ttl=3600)
+# @st.cache_data(ttl=3600)
+# def get_latest_predictions():
+#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
+#     files = sorted(
+#         [obj["Key"] for obj in response.get("Contents", [])
+#          if obj["Key"].endswith("_predictions.csv")],
+#         reverse=True
+#     )
+#     if not files:
+#         return None
+#     df = pd.read_csv(
+#         f"s3://{S3_BUCKET}/{files[0]}",
+#         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
+#     )
+#     return df[df["category"] == "Top10"].copy()
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
     files = sorted(
@@ -54,7 +68,6 @@ def get_latest_predictions():
         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
     return df[df["category"] == "Top10"].copy()
-
 
 
 ############################################################
