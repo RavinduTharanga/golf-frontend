@@ -22,16 +22,10 @@ s3_client = boto3.client(
 
 # ── tournament live check ─────────────────────────────────────────────────────
 
-# def is_tournament_live():
-#     et = pytz.timezone("America/New_York")
-#     now = datetime.now(et)
-#     is_tournament_day = now.weekday() in [3, 4, 5, 6]  # Thu-Sun
-#     is_playing_hours = dtime(8, 0) <= now.time() <= dtime(20, 0)
-#     return is_tournament_day and is_playing_hours
 def is_tournament_live():
     et = pytz.timezone("America/New_York")
-    now = datetime.now(pytz.utc).astimezone(et)  # convert from UTC to ET
-    is_tournament_day = now.weekday() in [3, 4, 5, 6]
+    now = datetime.now(pytz.utc).astimezone(et)
+    is_tournament_day = now.weekday() in [3, 4, 5, 6]  # Thu-Sun
     is_playing_hours = dtime(8, 0) <= now.time() <= dtime(20, 0)
     return is_tournament_day and is_playing_hours
 
@@ -39,35 +33,7 @@ ttl = 300 if is_tournament_live() else 3600  # 5 min live, 1 hour otherwise
 
 # ── helpers ───────────────────────────────────────────────────────────────────
 
-# @st.cache_data(ttl=3600)
-# def get_latest_predictions():
-#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-#     files = sorted(
-#         [obj["Key"] for obj in response.get("Contents", [])
-#          if obj["Key"].endswith("_predictions.csv")],
-#         reverse=True
-#     )
-#     if not files:
-#         return None
-#     df = pd.read_csv(
-#         f"s3://{S3_BUCKET}/{files[0]}",
-#         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
-#     )
-#     return df[df["category"] == "Top10"].copy()
-# def get_latest_predictions():
-#     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
-#     files = sorted(
-#         [obj["Key"] for obj in response.get("Contents", [])
-#          if obj["Key"].endswith("_predictions.csv")],
-#         reverse=True
-#     )
-#     if not files:
-#         return None
-#     df = pd.read_csv(
-#         f"s3://{S3_BUCKET}/{files[0]}",
-#         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
-#     )
-#     return df[df["category"] == "Top10"].copy()
+@st.cache_data(ttl=3600)
 def get_latest_predictions():
     response = s3_client.list_objects_v2(Bucket=S3_BUCKET, Prefix="predictions/")
     files = sorted(
@@ -86,69 +52,9 @@ def get_latest_predictions():
     return df[df["category"] == "Top10"].copy()
 
 
-############################################################
-
-# @st.cache_data(ttl=ttl)
-# def get_book_odds():
-#     url = "https://feeds.datagolf.com/betting-tools/outrights"
-#     params = {
-#         "tour": "pga",
-#         "market": "top_10",
-#         "odds_format": "percent",
-#         "file_format": "json",
-#         "key": DATAGOLF_KEY,
-#     }
-#     r = requests.get(url, params=params, timeout=30)
-#     r.raise_for_status()
-#     data = r.json()
-#     books = data.get("books_offering", [])
-#     rows = []
-#     for p in data.get("odds", []):
-#         name = p.get("player_name", "")
-#         book_probs = []
-#         for book in books:
-#             val = p.get(book)
-#             if val is not None:
-#                 try:
-#                     book_probs.append(float(val))
-#                 except (ValueError, TypeError):
-#                     pass
-#         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
-#         rows.append({
-#             "player_name": name,
-#             "avg_book_prob": avg_book,
-#         })
-#     return pd.DataFrame(rows)
-
-
-# @st.cache_data(ttl=ttl)
-# def get_live_stats():
-#     url = "https://feeds.datagolf.com/preds/live-tournament-stats"
-#     params = {
-#         "stats": "sg_total,sg_app,sg_ott,sg_putt",
-#         "round": "event_cumulative",
-#         "display": "value",
-#         "file_format": "json",
-#         "key": DATAGOLF_KEY,
-#     }
-#     r = requests.get(url, params=params, timeout=30)
-#     r.raise_for_status()
-#     data = r.json()
-#     rows = []
-#     for p in data.get("live_stats", []):
-#         rows.append({
-#             "player_name": p.get("player_name", ""),
-#             "position": p.get("position", "-"),
-#             "total": p.get("total", None),
-#             "thru": p.get("thru", 0),
-#             "sg_total": p.get("sg_total", None),
-#             "sg_app": p.get("sg_app", None),
-#             "sg_ott": p.get("sg_ott", None),
-#             "sg_putt": p.get("sg_putt", None),
-#         })
-#     return pd.DataFrame(rows)
 @st.cache_data(ttl=ttl)
 def get_book_odds():
+    """Returns (dataframe, event_name). event_name='' if no odds market open yet."""
     url = "https://feeds.datagolf.com/betting-tools/outrights"
     params = {
         "tour": "pga",
@@ -160,7 +66,7 @@ def get_book_odds():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
-    event_name = data.get("event_name", "")  # ADD THIS
+    event_name = data.get("event_name", "")
     books = data.get("books_offering", [])
     rows = []
     for p in data.get("odds", []):
@@ -174,15 +80,13 @@ def get_book_odds():
                 except (ValueError, TypeError):
                     pass
         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
-        rows.append({
-            "player_name": name,
-            "avg_book_prob": avg_book,
-        })
-    return pd.DataFrame(rows), event_name  # RETURN event_name too
+        rows.append({"player_name": name, "avg_book_prob": avg_book})
+    return pd.DataFrame(rows), event_name
 
 
 @st.cache_data(ttl=ttl)
 def get_live_stats():
+    """Returns (dataframe, event_name). event_name='' if round hasn't started."""
     url = "https://feeds.datagolf.com/preds/live-tournament-stats"
     params = {
         "stats": "sg_total,sg_app,sg_ott,sg_putt",
@@ -194,7 +98,7 @@ def get_live_stats():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
-    event_name = data.get("event_name", "")  # ADD THIS
+    event_name = data.get("event_name", "")
     rows = []
     for p in data.get("live_stats", []):
         rows.append({
@@ -207,7 +111,8 @@ def get_live_stats():
             "sg_ott": p.get("sg_ott", None),
             "sg_putt": p.get("sg_putt", None),
         })
-    return pd.DataFrame(rows), event_name  # RETURN event_name too
+    return pd.DataFrame(rows), event_name
+
 
 def normalize_name(n):
     if "," in str(n):
@@ -216,128 +121,108 @@ def normalize_name(n):
     return str(n).lower()
 
 
+def adjust_probability(base_p: float, sg_total, thru) -> float:
+    """Adjust base model probability using live SG performance."""
+    if pd.isna(sg_total) or pd.isna(thru) or thru == 0:
+        return base_p
+    holes_weight = min(thru / 18, 1.0)
+    ADJUSTMENT_FACTOR = 0.03
+    adjustment = sg_total * ADJUSTMENT_FACTOR * holes_weight
+    adjusted = base_p * (1 + adjustment)
+    return round(min(max(adjusted, 0.0), 1.0), 4)
+
+
 # ── UI ────────────────────────────────────────────────────────────────────────
 
-# st.title("Golf edge dashboard")
-st.title("⛳ Fairway Edge  Predictions")
+st.title("⛳ Fairway Edge Predictions")
 
-# if is_tournament_live():
-#     st.caption(f"🟢 Live..... | {datetime.now().strftime('%H:%M:%S')} ET")
-# else:
-#     st.caption(f"🔴 Game Stopped | {datetime.now().strftime('%H:%M:%S')} ET")
 et = pytz.timezone("America/New_York")
 now_et = datetime.now(pytz.utc).astimezone(et)
 
-if is_tournament_live():
+live_now = is_tournament_live()
+if live_now:
     st.caption(f"🟢 Live | {now_et.strftime('%H:%M:%S')} ET")
 else:
     st.caption(f"🔴 No active round | {now_et.strftime('%H:%M:%S')} ET")
 
+# ── load data ──────────────────────────────────────────────────────────────────
 
-# load data
 with st.spinner("Loading..."):
     preds = get_latest_predictions()
+
+    if preds is None:
+        st.error("No predictions found in S3.")
+        st.stop()
+
+    tournament = preds["tournament"].iloc[0]
+    year = preds["year"].iloc[0]
+
+    # odds — usually available once the field is set, even pre-tournament
     try:
-        odds_df = get_book_odds()
-        odds_ok = True
+        odds_df, odds_event_name = get_book_odds()
+        odds_ok = (not odds_df.empty) and (odds_event_name == tournament)
     except Exception as e:
         odds_ok = False
+        odds_event_name = ""
         st.warning(f"Could not load odds: {e}")
+
+    # live stats — only meaningful once the round has actually started
     try:
-        live_df = get_live_stats()
-        live_ok = True
+        live_df, live_event_name = get_live_stats()
+        live_ok = (not live_df.empty) and (live_event_name == tournament)
     except Exception as e:
         live_ok = False
+        live_event_name = ""
         st.warning(f"Could not load live stats: {e}")
 
-if preds is None:
-    st.error("No predictions found in S3.")
-    st.stop()
-
-tournament = preds["tournament"].iloc[0]
-year = preds["year"].iloc[0]
 st.subheader(f"{tournament} {year}")
 
+if not odds_ok and odds_event_name and odds_event_name != tournament:
+    st.info(f"Odds board is still showing '{odds_event_name}' — not open yet for {tournament}.")
 
-# train model
-
-def adjust_probability(base_p: float, sg_total, thru) -> float:
-    """Adjust base model probability using live SG performance."""
-    if pd.isna(sg_total) or pd.isna(thru) or thru == 0:
-        return base_p  # no live data yet — return original
-
-    # Scale SG by holes played — more holes = more reliable signal
-    holes_weight = min(thru / 18, 1.0)  # 0 to 1 as round progresses
-
-    # Adjustment factor — controls how much live data moves the needle
-    # 0.03 means SG of +5 boosts probability by 15%
-    ADJUSTMENT_FACTOR = 0.03
-
-    adjustment = sg_total * ADJUSTMENT_FACTOR * holes_weight
-    adjusted = base_p * (1 + adjustment)
-
-    # Cap between 0 and 1
-    return round(min(max(adjusted, 0.0), 1.0), 4)
+if not live_ok:
+    if live_event_name and live_event_name != tournament:
+        st.info(f"Live stats are for '{live_event_name}' — {tournament} hasn't teed off yet.")
+    else:
+        st.info(f"{tournament} hasn't started yet — live position/SG will appear once round 1 tees off.")
 
 # ── merge data ────────────────────────────────────────────────────────────────
 
 preds = preds.copy()
 preds["name_key"] = preds["player_name"].apply(normalize_name)
 
-# if odds_ok and not odds_df.empty:
-#     odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
-#     preds = preds.merge(odds_df[["name_key", "avg_book_prob"]], on="name_key", how="left")
-# else:
-#     preds["avg_book_prob"] = None
+if odds_ok:
+    odds_df = odds_df.copy()
+    odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
+    preds = preds.merge(odds_df[["name_key", "avg_book_prob"]], on="name_key", how="left")
+else:
+    preds["avg_book_prob"] = None
 
-# if live_ok and not live_df.empty:
-#     live_df["name_key"] = live_df["player_name"].apply(normalize_name)
-#     preds = preds.merge(
-#         live_df[["name_key", "position", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]],
-#         on="name_key", how="left"
-#     )
-# else:
-#     for col in ["position", "total", "thru", "sg_total"]:
-#         preds[col] = None
+if live_ok:
+    live_df = live_df.copy()
+    live_df["name_key"] = live_df["player_name"].apply(normalize_name)
+    preds = preds.merge(
+        live_df[["name_key", "position", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]],
+        on="name_key", how="left"
+    )
+else:
+    for col in ["position", "total", "thru", "sg_total"]:
+        preds[col] = None
 
-
-# Apply live adjustment
+# live adjustment only does anything once thru > 0, otherwise returns base_p unchanged
 preds["adjusted_p"] = preds.apply(
-    lambda row: adjust_probability(
-        row["p"],
-        row.get("sg_total"),
-        row.get("thru")
-    ), axis=1
+    lambda row: adjust_probability(row["p"], row.get("sg_total"), row.get("thru")),
+    axis=1
 )
 
-preds["your_model_pct"] = (preds["p"] * 100).round(1)          # original
-preds["adjusted_pct"] = (preds["adjusted_p"] * 100).round(1)   # live adjusted
+preds["your_model_pct"] = (preds["p"] * 100).round(1)
+preds["adjusted_pct"] = (preds["adjusted_p"] * 100).round(1)
 preds["book_pct"] = (preds["avg_book_prob"] * 100).round(1) if "avg_book_prob" in preds else None
-preds["edge"] = (preds["adjusted_pct"] - preds["book_pct"]).round(1)  # edge uses adjusted
-# preds["your_model_pct"] = (preds["p"] * 100).round(1)
-# preds["book_pct"] = (preds["avg_book_prob"] * 100).round(1) if "avg_book_prob" in preds else None
-# preds["edge"] = (preds["your_model_pct"] - preds["book_pct"]).round(1)
+preds["edge"] = (preds["adjusted_pct"] - preds["book_pct"]).round(1)
 
-# ── metrics ───────────────────────────────────────────────────────────────────
+st.divider()
 
-# m1, m2, m3, m4 = st.columns(4)
-# m1.metric("Players tracked", len(preds))
-# if "edge" in preds.columns and preds["edge"].notna().any():
-#     best = preds.loc[preds["edge"].idxmax()]
-#     m2.metric("Best edge", f"+{best['edge']}%", best["player_name"].split(",")[0])
-#     m3.metric("Positive edges", int((preds["edge"] > 0).sum()))
-# else:
-#     m2.metric("Odds", "Unavailable")
-#     m3.metric("Live", "Pre-tournament" if not live_ok else "Live")
-
-# if live_ok and "thru" in preds.columns:
-#     avg_thru = preds["thru"].dropna()
-#     if not avg_thru.empty:
-#         m4.metric("Avg holes played", f"{avg_thru.mean():.0f}")
-
-# st.divider()
-
-# ── top 5 table ───────────────────────────────────────────────────────────────
+# ── top 10 table ───────────────────────────────────────────────────────────────
 
 st.markdown("### Top 10 model picks")
 
@@ -346,25 +231,25 @@ for _, row in preds.sort_values("rank").iterrows():
     edge_val = row.get("edge", None)
     has_edge = pd.notna(edge_val)
 
-    if has_edge and edge_val > 50:
+    if has_edge and edge_val > 5:
         signal = f"🟢 +{edge_val:.1f}%"
-    elif has_edge and edge_val < 50:
+    elif has_edge and edge_val > 0:
         signal = f"🟡 +{edge_val:.1f}%"
-    elif has_edge and edge_val < 30:
+    elif has_edge:
         signal = f"🔴 {edge_val:.1f}%"
     else:
         signal = "⚪ —"
 
-    table_rows.append({        # ← must be indented inside the for loop
+    table_rows.append({
         "Rank": int(row["rank"]),
         "Player": row["player_name"],
         "Model %": f"{row['your_model_pct']}%",
-        "Live adj %": f"{row['adjusted_pct']}%",
+        "Live adj %": f"{row['adjusted_pct']}%" if live_ok else "—",
         "Book %": f"{row['book_pct']:.1f}%" if pd.notna(row.get("book_pct")) else "—",
         "Edge": signal,
-        "Pos": str(row.get("position", "—") or "—"),
-        "SG": f"{row['sg_total']:.2f}" if pd.notna(row.get("sg_total")) else "—",
-        "Thru": int(row["thru"]) if pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
+        "Pos": str(row.get("position", "—") or "—") if live_ok else "—",
+        "SG": f"{row['sg_total']:.2f}" if live_ok and pd.notna(row.get("sg_total")) else "—",
+        "Thru": int(row["thru"]) if live_ok and pd.notna(row.get("thru")) and row.get("thru", 0) > 0 else "—",
     })
 
 st.dataframe(
@@ -377,9 +262,8 @@ st.divider()
 
 # ── live leaderboard ──────────────────────────────────────────────────────────
 
-if live_ok and not live_df.empty:
+if live_ok:
     st.markdown("### Live leaderboard")
     live_display = live_df[["position", "player_name", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]].copy()
     live_display.columns = ["Pos", "Player", "Score", "Thru", "SG Total", "SG App", "SG OTT", "SG Putt"]
     st.dataframe(live_display, hide_index=True, use_container_width=True)
-
