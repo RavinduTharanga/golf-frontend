@@ -88,6 +88,65 @@ def get_latest_predictions():
 
 ############################################################
 
+# @st.cache_data(ttl=ttl)
+# def get_book_odds():
+#     url = "https://feeds.datagolf.com/betting-tools/outrights"
+#     params = {
+#         "tour": "pga",
+#         "market": "top_10",
+#         "odds_format": "percent",
+#         "file_format": "json",
+#         "key": DATAGOLF_KEY,
+#     }
+#     r = requests.get(url, params=params, timeout=30)
+#     r.raise_for_status()
+#     data = r.json()
+#     books = data.get("books_offering", [])
+#     rows = []
+#     for p in data.get("odds", []):
+#         name = p.get("player_name", "")
+#         book_probs = []
+#         for book in books:
+#             val = p.get(book)
+#             if val is not None:
+#                 try:
+#                     book_probs.append(float(val))
+#                 except (ValueError, TypeError):
+#                     pass
+#         avg_book = sum(book_probs) / len(book_probs) if book_probs else None
+#         rows.append({
+#             "player_name": name,
+#             "avg_book_prob": avg_book,
+#         })
+#     return pd.DataFrame(rows)
+
+
+# @st.cache_data(ttl=ttl)
+# def get_live_stats():
+#     url = "https://feeds.datagolf.com/preds/live-tournament-stats"
+#     params = {
+#         "stats": "sg_total,sg_app,sg_ott,sg_putt",
+#         "round": "event_cumulative",
+#         "display": "value",
+#         "file_format": "json",
+#         "key": DATAGOLF_KEY,
+#     }
+#     r = requests.get(url, params=params, timeout=30)
+#     r.raise_for_status()
+#     data = r.json()
+#     rows = []
+#     for p in data.get("live_stats", []):
+#         rows.append({
+#             "player_name": p.get("player_name", ""),
+#             "position": p.get("position", "-"),
+#             "total": p.get("total", None),
+#             "thru": p.get("thru", 0),
+#             "sg_total": p.get("sg_total", None),
+#             "sg_app": p.get("sg_app", None),
+#             "sg_ott": p.get("sg_ott", None),
+#             "sg_putt": p.get("sg_putt", None),
+#         })
+#     return pd.DataFrame(rows)
 @st.cache_data(ttl=ttl)
 def get_book_odds():
     url = "https://feeds.datagolf.com/betting-tools/outrights"
@@ -101,6 +160,7 @@ def get_book_odds():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
+    event_name = data.get("event_name", "")  # ADD THIS
     books = data.get("books_offering", [])
     rows = []
     for p in data.get("odds", []):
@@ -118,7 +178,7 @@ def get_book_odds():
             "player_name": name,
             "avg_book_prob": avg_book,
         })
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows), event_name  # RETURN event_name too
 
 
 @st.cache_data(ttl=ttl)
@@ -134,6 +194,7 @@ def get_live_stats():
     r = requests.get(url, params=params, timeout=30)
     r.raise_for_status()
     data = r.json()
+    event_name = data.get("event_name", "")  # ADD THIS
     rows = []
     for p in data.get("live_stats", []):
         rows.append({
@@ -146,8 +207,7 @@ def get_live_stats():
             "sg_ott": p.get("sg_ott", None),
             "sg_putt": p.get("sg_putt", None),
         })
-    return pd.DataFrame(rows)
-
+    return pd.DataFrame(rows), event_name  # RETURN event_name too
 
 def normalize_name(n):
     if "," in str(n):
