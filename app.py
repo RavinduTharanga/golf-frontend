@@ -290,15 +290,15 @@ preds["name_key"] = preds["player_name"].apply(normalize_name)
 # else:
 #     preds["avg_book_prob"] = None
 
-if live_ok and not live_df.empty:
-    live_df["name_key"] = live_df["player_name"].apply(normalize_name)
-    preds = preds.merge(
-        live_df[["name_key", "position", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]],
-        on="name_key", how="left"
-    )
-else:
-    for col in ["position", "total", "thru", "sg_total"]:
-        preds[col] = None
+# if live_ok and not live_df.empty:
+#     live_df["name_key"] = live_df["player_name"].apply(normalize_name)
+#     preds = preds.merge(
+#         live_df[["name_key", "position", "total", "thru", "sg_total", "sg_app", "sg_ott", "sg_putt"]],
+#         on="name_key", how="left"
+#     )
+# else:
+#     for col in ["position", "total", "thru", "sg_total"]:
+#         preds[col] = None
 
 
 # Apply live adjustment
