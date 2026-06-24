@@ -284,11 +284,11 @@ def adjust_probability(base_p: float, sg_total, thru) -> float:
 preds = preds.copy()
 preds["name_key"] = preds["player_name"].apply(normalize_name)
 
-if odds_ok and not odds_df.empty:
-    odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
-    preds = preds.merge(odds_df[["name_key", "avg_book_prob"]], on="name_key", how="left")
-else:
-    preds["avg_book_prob"] = None
+# if odds_ok and not odds_df.empty:
+#     odds_df["name_key"] = odds_df["player_name"].apply(normalize_name)
+#     preds = preds.merge(odds_df[["name_key", "avg_book_prob"]], on="name_key", how="left")
+# else:
+#     preds["avg_book_prob"] = None
 
 if live_ok and not live_df.empty:
     live_df["name_key"] = live_df["player_name"].apply(normalize_name)
