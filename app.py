@@ -83,7 +83,9 @@ def get_latest_predictions(checkpoint_label: str):
         f"s3://{S3_BUCKET}/{latest_key}",
         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
-    return df[df["category"] == "Top10"].copy()
+    if "category" in df.columns:
+        df = df[df["category"] == "Top10"].copy()
+    return df
 
 
 @st.cache_data(ttl=ttl)
