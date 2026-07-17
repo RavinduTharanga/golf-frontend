@@ -27,24 +27,31 @@ ROUND_TAGS = ("_r1_", "_r2_", "_r3_")
 CHECKPOINT_CONFIG = {
     # Same file(s) the original script used: anything ending in
     # "_predictions.csv" that ISN'T tagged as an r1/r2/r3 checkpoint file.
+    # Already has player_name / rank / p / tournament / year — no renaming needed.
     "Pre-Tournament": {
         "prefix": "predictions/",
         "matcher": lambda key: key.endswith("_predictions.csv") and not any(tag in key for tag in ROUND_TAGS),
+        "column_map": {},
     },
     # results_post_r1/live_post_r1_top10_predictions.csv
+    # columns: dg_id, player_name, r1_sg_total, r1_rank, r1_strokes_back, p_top10
+    # no tournament/year in this file — falls back to the live-stats event name.
     "After Round 1": {
         "prefix": "results_post_r1/",
         "matcher": lambda key: key.endswith("_top10_predictions.csv"),
+        "column_map": {"r1_rank": "rank", "p_top10": "p"},
     },
     # Guessing the same naming pattern will be used for rounds 2/3 —
-    # update the prefix/matcher here once those folders exist.
+    # update prefix/matcher/column_map here once those folders exist.
     "After Round 2": {
         "prefix": "results_post_r2/",
         "matcher": lambda key: key.endswith("_top10_predictions.csv"),
+        "column_map": {"r2_rank": "rank", "p_top10": "p"},
     },
     "After Round 3": {
         "prefix": "results_post_r3/",
         "matcher": lambda key: key.endswith("_top10_predictions.csv"),
+        "column_map": {"r3_rank": "rank", "p_top10": "p"},
     },
 }
 DEFAULT_CHECKPOINT = "Pre-Tournament"
@@ -83,6 +90,8 @@ def get_latest_predictions(checkpoint_label: str):
         f"s3://{S3_BUCKET}/{latest_key}",
         storage_options={"key": AWS_ACCESS_KEY, "secret": AWS_SECRET_KEY}
     )
+    if config["column_map"]:
+        df = df.rename(columns=config["column_map"])
     if "category" in df.columns:
         df = df[df["category"] == "Top10"].copy()
     return df
@@ -205,8 +214,25 @@ with st.spinner("Loading..."):
         st.error(f"No '{active_label}' predictions found in S3.")
         st.stop()
 
-    tournament = preds["tournament"].iloc[0]
-    year = preds["year"].iloc[0]
+    # live stats — fetch first, since round-checkpoint files (r1/r2/r3)
+    # don't carry their own tournament/year columns; we borrow the event
+    # name from this feed in that case
+    try:
+        live_df, live_event_name = get_live_stats()
+        live_fetch_ok = not live_df.empty
+    except Exception as e:
+        live_df, live_event_name = pd.DataFrame(), ""
+        live_fetch_ok = False
+        st.warning(f"Could not load live stats: {e}")
+
+    if "tournament" in preds.columns:
+        tournament = preds["tournament"].iloc[0]
+        year = preds["year"].iloc[0]
+    else:
+        tournament = live_event_name or "Current Tournament"
+        year = now_et.year
+
+    live_ok = live_fetch_ok and (live_event_name == tournament)
 
     # odds — usually available once the field is set, even pre-tournament
     try:
@@ -216,15 +242,6 @@ with st.spinner("Loading..."):
         odds_ok = False
         odds_event_name = ""
         st.warning(f"Could not load odds: {e}")
-
-    # live stats — only meaningful once the round has actually started
-    try:
-        live_df, live_event_name = get_live_stats()
-        live_ok = (not live_df.empty) and (live_event_name == tournament)
-    except Exception as e:
-        live_ok = False
-        live_event_name = ""
-        st.warning(f"Could not load live stats: {e}")
 
 st.subheader(f"{tournament} {year} — {active_label}")
 
